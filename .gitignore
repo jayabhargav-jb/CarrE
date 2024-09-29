@@ -4,10 +4,10 @@ Lib
 Scripts
 
 # Linux Directories
-./bin
-./include
-./lib*
-./share
+/bin
+/include
+/lib*
+/share
 
 pyvenv.cfg
 __pycache__
