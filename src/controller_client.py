@@ -25,6 +25,8 @@ def send_command(command):
     ser.write(command.encode())
     for i in range(7):
         ack += ser.read()
+    
+    ser.flushInput()
         
     print('Arduino sent back %s' % ack)
 
