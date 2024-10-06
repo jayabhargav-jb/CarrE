@@ -38,6 +38,9 @@ class XboxController(object):
     def read(self):
         x = self.LeftJoystickX
         y = self.LeftJoystickY
+
+        left_pwm = 0
+        right_pwm = 0
         
         pwm = MAX_PWM
 
@@ -49,24 +52,31 @@ class XboxController(object):
         else:
             dir = b'0' # STOP
 
-        if (abs(x) + abs(y)) > 1:
-            pwm = MAX_PWM/2
-        else:
-            pwm = MAX_PWM
+        # if (abs(x) + abs(y)) > 1:
+        #     pwm = MAX_PWM/2
+        # else:
+        #     pwm = MAX_PWM
 
-        # Speed logic
-        if x > DEADZONE: # LEFT
-            left_pwm = pwm * abs(x+y)
-            right_pwm = pwm * abs(y)
-        elif x < (-DEADZONE): # RIGHT
-            left_pwm = pwm * abs(y)
-            right_pwm = pwm * abs(x+y)
-        else: # FORWARD OR BACKWARD
-            left_pwm = pwm * abs(y)
-            right_pwm = pwm * abs(y)
+        # # OLD LOGIC
+        # # Speed logic
+        # if x > DEADZONE: # LEFT
+        #     left_pwm = pwm * abs(x+y)
+        #     right_pwm = pwm * abs(y)
+        # elif x < (-DEADZONE): # RIGHT
+        #     left_pwm = pwm * abs(y)
+        #     right_pwm = pwm * abs(x+y)
+        # else: # FORWARD OR BACKWARD
+        #     left_pwm = pwm * abs(y)
+        #     right_pwm = pwm * abs(y)
         
+        # # NEW LOGIC
+        if x < 0:
+            left_pwm = pwm * abs(y)
+            right_pwm = pwm * (abs(y)+abs(x))
         
-
+        elif x > 0:
+            left_pwm = pwm * (abs(y)+abs(x))
+            right_pwm = pwm * abs(y)
         # return {
         #     'dir' : dir,
         #     'lpwm' : int(left_pwm),

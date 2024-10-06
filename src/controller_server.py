@@ -33,7 +33,7 @@ def broadcast_data():
             # print(data)
             for sid in connected_clients:
                 sio.emit('cmdStatus', data, to=sid)
-        time.sleep(0.6)  # Adjust the interval as needed
+        time.sleep(0.1)  # Adjust the interval as needed
 
 # Start the background thread for broadcasting data
 broadcast_thread = threading.Thread(target=broadcast_data)

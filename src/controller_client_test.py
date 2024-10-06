@@ -1,12 +1,35 @@
+
+import sys
+sys.path.append('/home/carre/Desktop/CarrE/lib/python3.8/site-packages')
+
 import socketio
 import subprocess 
-# import serial
+import serial
+import time
 # Create a Socket.IO client
 sio = socketio.Client()
-max_pwm = 255
 
 # Establish serial connection
-# ser = serial.Serial("/dev/ttyUSB0", 115200, timeout=1)
+ser = serial.Serial("/dev/ttyUSB1", 115200, timeout=1)
+# ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
+
+# Reset the Arduino's line to ensure communication starts correctly
+ser.setDTR(False)
+time.sleep(0.5)
+ser.flushInput()
+ser.setDTR(True)
+time.sleep(0.5)
+
+def send_command(command):
+    ack = b''
+    ser.write(command.encode())
+    # for i in range(7):
+    # time.sleep(0.1)
+    # ack = ser.readall()
+    
+    ser.flushInput()
+        
+    # print('Arduino sent back %s' % ack)
 
 # Define the event handlers
 @sio.event
@@ -21,64 +44,27 @@ def disconnect():
 
 @sio.on('cmdStatus')
 def robotCmd(data):
-    # print(data)
+    print(data)
     
-    command = 'f 0' 
-    deadzone = 0.2
-    x = data['x']
-    y = data['y']
-    abs_x = abs(x)
-    abs_y = abs(y)
-    if abs_x < deadzone:
-        x = 0
-    if abs_y < deadzone:
-        y = 0
+    if not data['dir']:
+        command = "0"
+    else:
+        command = str(data['dir'].decode()) + " " + str(data['lpwm']).rjust(3, '0') + " " + str(data['rpwm']).rjust(3,'0')
     
-    print(x, y)
-    # if abs(x)>abs(y):
-    #     if x>=0:
-    #         pwm = x * max_pwm
-    #         command = 'r '+str(pwm)
-    #     else:
-    #         x = abs(x)
-    #         pwm = x * max_pwm
-    #         commmand = 'l '+str(pwm)
     
-    # elif abs(x)<abs(y):
-    #     if y>=0:
-    #         pwm = y * max_pwm
-    #         command = 'f '+str(pwm)
-    #     elif y<0:
-    #         y = abs(y)
-    #         pwm = y * max_pwm
-    #         commmand = 'b '+str(pwm)
-
-
-    if abs(x) > abs(y):
-        if x > 0:
-            pwm = int(x * max_pwm)
-            command = f'r {pwm}'
-        elif x < 0:
-            pwm = int(abs(x) * max_pwm)
-            command = f'l {pwm}'
-    elif abs(x) < abs(y):
-        if y > 0:
-            pwm = int(y * max_pwm)
-            command = f'f {pwm}'
-        elif y < 0:
-            pwm = int(abs(y) * max_pwm)
-            command = f'b {pwm}'
-    
-    # print(command)
-    
+    print(command)
+    send_command(command)
     # ser.write(command.encode())
-    # ack = ser.read()
-    # if ack:
-    #     return
-    # print('Arduino sent back %s' % ack)
+    # time.sleep(0.5)
+    # ack = b''
+    # ser.write(command.encode())
+    # for i in range(7):
+    #     ack += ser.read()
+    # print('Arduino sent back', ack.decode())
+    
 
 # Connect to the Socket.IO server
-sio.connect('http://localhost:8080')
+sio.connect('http://192.168.186.240:8080')
 # sio.connect('http://'+subprocess.check_output("arp | grep d0:39:57", shell = True, text = True).split()[0]+':8080')
 
 # Wait for events
@@ -86,4 +72,5 @@ sio.connect('http://localhost:8080')
 try:
     sio.wait()
 except KeyboardInterrupt:
+    sio.shutdown()
     print("exiting")
