@@ -1,0 +1,19 @@
+services:
+  carre:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      
+    container_name: carre
+
+    volumes:
+      - ./carre:/carre
+      - ./ros_capstone:/ros_capstone
+    
+    # devices:
+      # - /dev/ttyUSB0:/dev/ttyUSB0
+      # - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/ttyACM0:/dev/ttyACM0
+
+    tty: true
+    
