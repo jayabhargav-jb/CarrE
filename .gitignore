@@ -1,0 +1,13 @@
+# ROS 
+build
+build_isolated
+devel
+devel_isolated
+
+# Python
+bin
+include
+lib
+lib64
+share
+pyvenv.cfg
