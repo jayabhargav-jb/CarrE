@@ -30,6 +30,7 @@ def broadcast_data():
     while True:
         if connected_clients:
             data = joy.read()
+            data = {"dir":b'2', "lpwm":20, "rpwm":20}
             # print(data)
             for sid in connected_clients:
                 sio.emit('cmdStatus', data, to=sid)
