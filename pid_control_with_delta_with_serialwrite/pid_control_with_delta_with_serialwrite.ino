@@ -96,6 +96,8 @@ void setup() {
   pinMode(encoderPin2, INPUT);
   pinMode(pwm_r1, OUTPUT);
   pinMode(pwm_l2, OUTPUT);
+  pinMode(pwm_r2, OUTPUT);
+  pinMode(pwm_l1, OUTPUT);
   // setting the pins high
   digitalWrite(enable_1r,HIGH);
   digitalWrite(enable_1l,HIGH);
