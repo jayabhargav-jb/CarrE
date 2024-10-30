@@ -2,9 +2,6 @@ from inputs import get_gamepad
 import math
 import threading
 
-from .CONSTANTS import *
-
-
 class XboxController(object):
     MAX_TRIG_VAL = math.pow(2, 8)
     MAX_JOY_VAL = math.pow(2, 15)
@@ -42,8 +39,24 @@ class XboxController(object):
         left_pwm = 0
         right_pwm = 0
         
-        pwm = MAX_PWM
+        # # NEW LOGIC
+        # DEADZONE implementation
+        if (abs(x) < DEADZONE) and (abs(y) < DEADZONE):
+            x = 0
+            y = 0
+        elif (abs(x) < DEADZONE):
+            x = 0
+        elif (abs(y) < DEADZONE):
+            y = 0
 
+        # PWM implementation
+        if x <= 0:
+            left_pwm = MAX_PWM * abs(y)
+            right_pwm = MAX_PWM * (abs(y)+abs(x))
+        elif x >= 0:
+            left_pwm = MAX_PWM * (abs(y)+abs(x))
+            right_pwm = MAX_PWM * abs(y)
+        
         # Forward and Backward logic
         if y > DEADZONE:
             dir = b'2' # FORWARD
@@ -51,39 +64,6 @@ class XboxController(object):
             dir = b'1' # BACKWARD
         else:
             dir = b'0' # STOP
-
-        # if (abs(x) + abs(y)) > 1:
-        #     pwm = MAX_PWM/2
-        # else:
-        #     pwm = MAX_PWM
-
-        # # OLD LOGIC
-        # # Speed logic
-        # if x > DEADZONE: # LEFT
-        #     left_pwm = pwm * abs(x+y)
-        #     right_pwm = pwm * abs(y)
-        # elif x < (-DEADZONE): # RIGHT
-        #     left_pwm = pwm * abs(y)
-        #     right_pwm = pwm * abs(x+y)
-        # else: # FORWARD OR BACKWARD
-        #     left_pwm = pwm * abs(y)
-        #     right_pwm = pwm * abs(y)
-        
-        # # NEW LOGIC
-        if x < 0:
-            left_pwm = pwm * abs(y)
-            right_pwm = pwm * (abs(y)+abs(x))
-        
-        elif x > 0:
-            left_pwm = pwm * (abs(y)+abs(x))
-            right_pwm = pwm * abs(y)
-        # return {
-        #     'dir' : dir,
-        #     'lpwm' : int(left_pwm),
-        #     'rpwm' : int(right_pwm),
-        #     'x' : x,
-        #     'y' : y
-        # }
 
         return {
             'dir' : dir,
@@ -137,9 +117,14 @@ class XboxController(object):
                     self.DownDPad = event.state
 
 if __name__ == "__main__":
+
+    from CONSTANTS import *
     joy = XboxController()
     try:
         while True:
             print(joy.read())
     except KeyboardInterrupt:
         print("exiting.")
+
+else:
+    from .CONSTANTS import *
