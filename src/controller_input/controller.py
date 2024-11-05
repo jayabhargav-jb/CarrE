@@ -37,6 +37,7 @@ class XboxController(object):
         y = self.LeftJoystickY
 
         left_pwm = 0
+        dir = b'0'
         right_pwm = 0
         
         # # NEW LOGIC
@@ -62,7 +63,7 @@ class XboxController(object):
             dir = b'2' # FORWARD
         elif y < (-DEADZONE):
             dir = b'1' # BACKWARD
-        else:
+        elif((abs(x)+abs(y))<0.2):
             dir = b'0' # STOP
 
         return {
