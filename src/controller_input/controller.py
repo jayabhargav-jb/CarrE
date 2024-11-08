@@ -6,8 +6,8 @@ class XboxController(object):
     MAX_TRIG_VAL = math.pow(2, 8)
     MAX_JOY_VAL = math.pow(2, 15)
 
-    def __init__(self,sio_client):
-        self.sio = sio_client
+    def __init__(self):
+        # self.sio = sio_client
         self.LeftJoystickY = 0
         self.LeftJoystickX = 0
         self.RightJoystickY = 0
@@ -60,18 +60,24 @@ class XboxController(object):
             right_pwm = MAX_PWM * abs(y)
         
         # Forward and Backward logic
-        if (y > DEADZONE) or (x > DEADZONE):
+        
+        if(x > DEADZONE)  or (x < -DEADZONE):
+            dir = b'2' # TURNING 
+
+        if (y > DEADZONE):
             dir = b'2' # FORWARD
-        elif (y < -DEADZONE) or (x < -DEADZONE):
+        elif (y < -DEADZONE):
             dir = b'1' # BACKWARD
         elif((abs(x)+abs(y))<0.05):
             dir = b'0' # STOP
 
-        return {
-            'dir' : dir,
-            'lpwm' : int(left_pwm),
-            'rpwm' : int(right_pwm)
-        }
+        return [{
+                'dir' : dir,
+                'lpwm' : int(left_pwm),
+                'rpwm' : int(right_pwm)
+                },
+                [self.A, self.X]
+        ]
 
     def _monitor_controller(self):
         while True:
@@ -95,16 +101,16 @@ class XboxController(object):
                     self.RightBumper = event.state
                 elif event.code == 'BTN_SOUTH':
                     self.A = event.state
-                    #learn and repeat trial 
-                    if self.A:
-                        self.sio.emit('button_press', {'button': 'A'})
+                    # #learn and repeat trial 
+                    # if self.A:
+                    #     self.sio.emit('button_press', {'button': 'A'})
                 elif event.code == 'BTN_NORTH':
                     self.Y = event.state
                 elif event.code == 'BTN_WEST':
                     self.X = event.state
-                    #learn and repeat trial
-                    if self.X:
-                        self.sio.emit('button_press', {'button': 'X'})
+                    # #learn and repeat trial
+                    # if self.X:
+                    #     self.sio.emit('button_press', {'button': 'X'})
 
                 elif event.code == 'BTN_EAST':
                     self.B = event.state
