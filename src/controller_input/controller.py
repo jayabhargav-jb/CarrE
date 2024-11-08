@@ -6,7 +6,8 @@ class XboxController(object):
     MAX_TRIG_VAL = math.pow(2, 8)
     MAX_JOY_VAL = math.pow(2, 15)
 
-    def __init__(self):
+    def __init__(self,sio_client):
+        self.sio = sio_client
         self.LeftJoystickY = 0
         self.LeftJoystickX = 0
         self.RightJoystickY = 0
@@ -59,11 +60,11 @@ class XboxController(object):
             right_pwm = MAX_PWM * abs(y)
         
         # Forward and Backward logic
-        if y > DEADZONE:
+        if (y > DEADZONE) or (x > DEADZONE):
             dir = b'2' # FORWARD
-        elif y < (-DEADZONE):
+        elif (y < -DEADZONE) or (x < -DEADZONE):
             dir = b'1' # BACKWARD
-        elif((abs(x)+abs(y))<0.2):
+        elif((abs(x)+abs(y))<0.05):
             dir = b'0' # STOP
 
         return {
@@ -94,10 +95,17 @@ class XboxController(object):
                     self.RightBumper = event.state
                 elif event.code == 'BTN_SOUTH':
                     self.A = event.state
+                    #learn and repeat trial 
+                    if self.A:
+                        self.sio.emit('button_press', {'button': 'A'})
                 elif event.code == 'BTN_NORTH':
                     self.Y = event.state
                 elif event.code == 'BTN_WEST':
                     self.X = event.state
+                    #learn and repeat trial
+                    if self.X:
+                        self.sio.emit('button_press', {'button': 'X'})
+
                 elif event.code == 'BTN_EAST':
                     self.B = event.state
                 elif event.code == 'BTN_THUMBL':
@@ -119,13 +127,21 @@ class XboxController(object):
 
 if __name__ == "__main__":
 
-    from CONSTANTS import *
+    #learn and repeat trial
+   # import socketio
+    #sio = socketio.Client()
+    #sio.connect('http://192.168.237.42:8080')
+    #controller = XboxController(sio)  # Pass sio as an argument
+
+    #from CONSTANTS import *
     joy = XboxController()
     try:
         while True:
             print(joy.read())
     except KeyboardInterrupt:
+        #sio.disconnect()
         print("exiting.")
+        
 
 else:
     from .CONSTANTS import *

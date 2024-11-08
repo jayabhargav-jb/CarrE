@@ -6,10 +6,11 @@ from controller_input.controller import XboxController
 
 # Create a Flask app
 app = Flask(__name__)
-joy = XboxController()
+#joy = XboxController()
 # Create a Socket.IO server
 sio = socketio.Server()
 app.wsgi_app = socketio.WSGIApp(sio, app.wsgi_app)
+joy = XboxController(sio)
 
 connected_clients = set()
 
@@ -34,7 +35,7 @@ def broadcast_data():
             # print(data)
             for sid in connected_clients:
                 sio.emit('cmdStatus', data, to=sid)
-        time.sleep(0.10)  # Adjust the interval as needed
+        time.sleep(0.50)  # Adjust the interval as needed
 
 # Start the background thread for broadcasting data
 broadcast_thread = threading.Thread(target=broadcast_data)
