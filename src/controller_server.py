@@ -20,7 +20,7 @@ def connect(sid, environ):
     connected_clients.add(sid)
     # Send initial data to the newly connected client
     data = joy.read()
-    sio.emit('cmdStatus', data[0], to=sid)
+    sio.emit('cmdStatus', data, to=sid)
 
 @sio.event
 def disconnect(sid):
@@ -36,8 +36,8 @@ def broadcast_data():
             # print(data)
             # print("in broadcast data")
             for sid in connected_clients:
-                sio.emit('cmdStatus', data[0], to=sid)
-        time.sleep(0.10)  # Adjust the interval as needed
+                sio.emit('cmdStatus', data, to=sid)
+        time.sleep(0.15)  # Adjust the interval as needed
 
 # Start the background thread for broadcasting data
 broadcast_thread = threading.Thread(target=broadcast_data)
