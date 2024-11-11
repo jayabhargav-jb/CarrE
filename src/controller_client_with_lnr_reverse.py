@@ -1,6 +1,4 @@
 import sys
-sys.path.append('/home/carre/Desktop/CarrE/lib/python3.8/site-packages')
-
 import socketio 
 import serial
 import time
@@ -8,6 +6,8 @@ import time
 sio = socketio.Client()
 # DEBUG = True
 DEBUG = False
+
+learning, repeating, learnt_arr = 0, 0, [] 
 
 prev_input = ""
 
@@ -56,20 +56,44 @@ def disconnect():
 def robotCmd(data):
     # print(data)
     global prev_input
-    data = data[0]
-    
-    command = str(data['dir'].decode())+ " " + str(data['lpwm']).rjust(3, '0') + " " + str(data['rpwm']).rjust(3, '0') + " \n"  
-    
-    #data_temp = str(len(command))+"cmd:" + command
+    global learning, repeating, learnt_arr
+    command = "0 000 000"
+    # Learn Mode
+    if data[1][1]:
+        learning = 1
+        repeating = 0
+        print("learning")
 
-
+    # Repeat Mode
+    elif data[1][0]:
+        learning = 0
+        repeating = 1
+        print("repeating")
     
-    #learn_list.append(data_temp)
+    if learning:
+        learnt_arr.append(data[0])
+        data = data[0]
+        command = str(data['dir'].decode())+ " " + str(data['lpwm']).rjust(3, '0') + " " + str(data['rpwm']).rjust(3, '0') + " \n"
+        print("learning:", command)
+
+    elif repeating:
+        if len(learnt_arr) > 0:    
+            data = learnt_arr.pop(0)
+            if data['dir'].decode() == "1":
+                data['dir'] = b'2'
+            elif data['dir'].decode() == "2":
+                data['dir'] = b'1'
+            
+
+            # .rjust(3, '0')
+            command = str(data['dir'].decode())+ " " + str(data['lpwm']).rjust(3, '0') + " " + str(data['rpwm']).rjust(3, '0') + " \n"  
+
+            print("repeating:", command)
+        else:
+            print("data exhausted.") 
     if not DEBUG and command != prev_input:
         send_command(command)
-        print(command)
         prev_input = command
-
 
 # Connect to the Socket.IO server
 sio.connect('http://192.168.237.241:8080')

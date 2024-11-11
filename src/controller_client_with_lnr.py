@@ -8,6 +8,9 @@ sio = socketio.Client()
 DEBUG = False
 
 learning, repeating, learnt_arr = 0, 0, [] 
+
+prev_input = ""
+
 if not DEBUG:
     # Establish serial connection
     #ser = serial.Serial("/dev/ttyUSB0", 115200, timeout=1)
@@ -32,7 +35,7 @@ def send_command(command):
     ack = b''
     ser.write(command.encode())
     # for i in range(7):
-    ack = ser.readline()
+    # ack = ser.readline()
     
     # # ser.flushInput()
         
@@ -52,6 +55,7 @@ def disconnect():
 @sio.on('cmdStatus')
 def robotCmd(data):
     # print(data)
+    global prev_input
     global learning, repeating, learnt_arr
     command = "0 000 000"
     # Learn Mode
@@ -81,11 +85,12 @@ def robotCmd(data):
             print("repeating:", command)
         else:
             print("data exhausted.") 
-    if not DEBUG:
+    if not DEBUG and command != prev_input:
         send_command(command)
+        prev_input = command
 
 # Connect to the Socket.IO server
-sio.connect('http://192.168.118.240:8080')
+sio.connect('http://192.168.237.241:8080')
 # sio.connect('http://'+subprocess.check_output("arp | grep d0:39:57", shell = True, text = True).split()[0]+':8080')
 
 # Wait for events
