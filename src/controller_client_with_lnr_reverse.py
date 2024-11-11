@@ -78,7 +78,7 @@ def robotCmd(data):
 
     elif repeating:
         if len(learnt_arr) > 0:    
-            data = learnt_arr.pop(0)
+            data = learnt_arr.pop(-1)
             if data['dir'].decode() == "1":
                 data['dir'] = b'2'
             elif data['dir'].decode() == "2":
@@ -108,7 +108,7 @@ except KeyboardInterrupt:
     if not DEBUG:
         ser.setDTR(False)
         time.sleep(0.1)
-        ser.setDTR(True)
+        # ser.setDTR(True)
         # time.sleep(1)
         ser.close()
 
