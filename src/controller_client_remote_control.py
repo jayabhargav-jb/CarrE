@@ -4,6 +4,10 @@ sys.path.append('/home/carre/Desktop/CarrE/lib/python3.8/site-packages')
 import socketio 
 import serial
 import time
+import csv
+
+f_obj = open("inputs.csv", "w", newline="\n")
+csv_writer = csv.writer(f_obj)
 # Create a Socket.IO client
 sio = socketio.Client()
 # DEBUG = True
@@ -57,7 +61,8 @@ def robotCmd(data):
     # print(data)
     global prev_input
     data = data[0]
-    
+    file_write = [data['dir'], data['lpwm'], data['rpwm']]
+    csv_writer.writerow(file_write)
     command = str(data['dir'].decode())+ " " + str(data['lpwm']).rjust(3, '0') + " " + str(data['rpwm']).rjust(3, '0') + " \n"  
     
     #data_temp = str(len(command))+"cmd:" + command
@@ -72,7 +77,7 @@ def robotCmd(data):
 
 
 # Connect to the Socket.IO server
-sio.connect('http://192.168.237.241:8080')
+sio.connect('http://192.168.237.240:8080')
 # sio.connect('http://'+subprocess.check_output("arp | grep d0:39:57", shell = True, text = True).split()[0]+':8080')
 
 # Wait for events
@@ -87,5 +92,5 @@ except KeyboardInterrupt:
         ser.setDTR(True)
         # time.sleep(1)
         ser.close()
-
+    f_obj.close()
     print("exiting")

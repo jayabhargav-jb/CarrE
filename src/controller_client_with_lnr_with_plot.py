@@ -2,6 +2,10 @@ import sys
 import socketio 
 import serial
 import time
+import csv
+
+f_obj = open("lnr.csv", "w", newline="\n")
+csv_writer = csv.writer(f_obj)
 # Create a Socket.IO client
 sio = socketio.Client()
 # DEBUG = True
@@ -20,6 +24,7 @@ if not DEBUG:
     time.sleep(0.1)
     ser.setDTR(True)
     time.sleep(1)
+    
 
 # print(ser.get_settings())
 # ser.reset_input_buffer()
@@ -68,11 +73,14 @@ def robotCmd(data):
     elif data[1][0]:
         learning = 0
         repeating = 1
+        csv_writer.writerow([])
         print("repeating")
     
     if learning:
         learnt_arr.append(data[0])
         data = data[0]
+        file_write = [data['dir'], data['lpwm'], data['rpwm']]
+        csv_writer.writerow(file_write)
         command = str(data['dir'].decode())+ " " + str(data['lpwm']).rjust(3, '0') + " " + str(data['rpwm']).rjust(3, '0') + " \n"
         print("learning:", command)
 
@@ -80,6 +88,8 @@ def robotCmd(data):
         if len(learnt_arr) > 0:    
             data = learnt_arr.pop(0)
             # .rjust(3, '0')
+            file_write = [data['dir'], data['lpwm'], data['rpwm']]
+            csv_writer.writerow(file_write)
             command = str(data['dir'].decode())+ " " + str(data['lpwm']).rjust(3, '0') + " " + str(data['rpwm']).rjust(3, '0') + " \n"  
 
             print("repeating:", command)
@@ -90,7 +100,7 @@ def robotCmd(data):
         prev_input = command
 
 # Connect to the Socket.IO server
-sio.connect('http://192.168.237.240:8080')
+sio.connect('http://192.168.111.240:8080')
 # sio.connect('http://'+subprocess.check_output("arp | grep d0:39:57", shell = True, text = True).split()[0]+':8080')
 
 # Wait for events
@@ -105,5 +115,5 @@ except KeyboardInterrupt:
         ser.setDTR(True)
         # time.sleep(1)
         ser.close()
-
+    f_obj.close()
     print("exiting")
