@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Control</title>
+    <!-- Link to the CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="title-bar">
+        <h1>CarrE (Carry Efficiently)</h1>
+    </header>
+    <header>
+        <nav>
+            <button onclick="triggerAction('remote_control')">Remote Control</button>
+            <button onclick="triggerAction('learn')">Learn</button>
+            <button onclick="triggerAction('repeat')">Repeat</button>
+            <button onclick="triggerAction('follow_me')">Follow Me</button>
+        </nav>
+    </header>
+    <main>
+        <div class="webcam">
+            <img src="{{ url_for('video_feed') }}" alt="Webcam feed">
+        </div>
+    </main>
+
+    <script>
+        function triggerAction(action) {
+            // Send a POST request to the server
+            fetch(`/action/${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the server response in a popup
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Check the console for details.');
+            });
+        }
+    </script>
+</body>
+</html>
