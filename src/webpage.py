@@ -33,6 +33,7 @@ def joystick_input():
     try:
         data = request.json
         x = data.get('x', 0)
+        x = -x
         y = data.get('y', 0)
         # Process joystick input here
         print(f"Joystick Input - X: {x}, Y: {y}")
