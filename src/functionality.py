@@ -41,8 +41,16 @@ is_recording = False
 playback_mode = False
 playback_index = 0
 
+# Follow Me
+palm_detected = False
+lower_bound = np.array([35, 50, 50])  # Green color lower HSV bound
+upper_bound = np.array([85, 255, 255])  # Green color upper HSV bound
+lower_skin = np.array([0, 20, 70], dtype=np.uint8) # Skin color lower bound
+upper_skin = np.array([20, 255, 255], dtype=np.uint8)
+
 def send_command(command):
     ack = b''
+    # CRC function
     ser.write(command.encode())
     # Optionally, read acknowledgment from the Arduino, if needed
     # ack = ser.readline()
@@ -158,23 +166,8 @@ def repeat():
 def follow_me(frame):
     # if current_mode != "follow_me":
     #     return  # Exit the function if we're not in follow_me mode
-    print(f"inside follow me")
-    lower_bound = np.array([35, 50, 50])  # Green color lower HSV bound
-    upper_bound = np.array([85, 255, 255])  # Green color upper HSV bound
 
-    frame_center_x = 320
-    frame_center_y = 240
-    MAX_SPEED = 40
-    STOP_THRESHOLD_AREA = 250000
-    MIN_AREA = 15000
-    prev_input = ""
-
-    if not DEBUG:
-        ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
-        ser.setDTR(False)
-        time.sleep(0.1)
-        ser.setDTR(True)
-        time.sleep(1)
+    global palm_detected, prev_input
 
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -183,7 +176,24 @@ def follow_me(frame):
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
 
+    
+
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            if 5000 < area < 25000:  # Palm size range (adjust as needed)
+                # Check for palm shape: convex hull with few defects
+                hull = cv2.convexHull(contour, returnPoints=False)
+                if len(hull) > 3:
+                    defects = cv2.convexityDefects(contour, hull)
+                    if defects is not None and len(defects) > 3:
+                        palm_detected = True
+                        print("palm detected")
+                        # cv2.drawContours(frame, [contour], -1, (255, 0, 0), 2)  # Draw detected palm
+                        break
+            else:
+                palm_detected = False
 
     if contours:
         largest_contour = max(contours, key=cv2.contourArea)
@@ -211,8 +221,9 @@ def follow_me(frame):
         left_motor_speed, right_motor_speed = int(left_motor_speed), int(right_motor_speed)
         command = f"2 {str(left_motor_speed).rjust(3, '0')} {str(right_motor_speed).rjust(3, '0')}\n"
         print(command)
-
-        if command != prev_input and not DEBUG:
+        if palm_detected:
+            print("palm detected, stopping")
+        if command != prev_input and not DEBUG and not palm_detected:
             send_command(command)
             prev_input = command
     else:
