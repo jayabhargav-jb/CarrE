@@ -26,22 +26,65 @@
     </main>
 
     <script>
+        let joystickData = { x: 0, y: 0 };
+
         function triggerAction(action) {
-            // Send a POST request to the server
             fetch(`/action/${action}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             })
-            .then(response => response.json())
-            .then(data => {
-                // Display the server response in a popup
-                alert(data.message);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Check the console for details.');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Check the console for details.');
+                });
         }
+
+        function updateJoystickData() {
+            const gamepads = navigator.getGamepads();
+            if (gamepads[0]) {
+                const joystick = gamepads[0];
+                const x = joystick.axes[0].toFixed(2); // X-axis
+                const y = joystick.axes[1].toFixed(2); // Y-axis
+                const joystickData = { x: parseFloat(x), y: parseFloat(y) };
+
+                // Send joystick data to the server
+                fetch('/joystick_input', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(joystickData),
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json(); // Parse JSON if the response is valid
+                    } else {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                })
+                .then(data => {
+                    console.log('Server response:', data.message);
+                })
+                .catch(error => {
+                    console.error('Error:', error.message);
+                });
+            }
+            requestAnimationFrame(updateJoystickData);
+        }
+
+        // Start listening for joystick input
+        window.addEventListener('gamepadconnected', () => {
+            console.log('Gamepad connected!');
+            updateJoystickData();
+        });
+
+        window.addEventListener('gamepaddisconnected', () => {
+            console.log('Gamepad disconnected!');
+        });
     </script>
 </body>
 </html>
