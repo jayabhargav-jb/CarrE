@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import serial
 import time
-# DEBUG = True
-DEBUG = False
+DEBUG = True
+# DEBUG = False
 prev_input = ""
 
 if not DEBUG:

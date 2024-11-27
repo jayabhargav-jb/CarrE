@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, Response, request, jsonify
 import cv2
 
@@ -5,6 +6,7 @@ app = Flask(__name__, template_folder="public", static_folder="public")
 
 # Capture from webcam
 camera = cv2.VideoCapture(0)
+# camera = cv2.VideoCapture(0, cv2.CAP_V4L2)
 
 def generate_frames():
     while True:
@@ -40,5 +42,6 @@ def joystick_input():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0")
     # app.run(debug=True)
