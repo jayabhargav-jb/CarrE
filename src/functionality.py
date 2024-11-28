@@ -22,8 +22,8 @@ left_pwm = 0
 right_pwm = 0
 
 # DEBUG mode and previous input
-DEBUG = True
-# DEBUG = False
+# DEBUG = True
+DEBUG = False
 prev_input = ""
 
 if not DEBUG:
@@ -50,11 +50,19 @@ upper_skin = np.array([20, 255, 255], dtype=np.uint8)
 
 def send_command(command):
     ack = b''
-    # CRC function
-    ser.write(command.encode())
+    # Checksum
+    checksum = sum(ord(char) for char in command)
+    checksum = checksum % 256
+    full_message = f"{command} {checksum} \n"  # Add a space and newline
+    ser.write(full_message.encode())
     # Optionally, read acknowledgment from the Arduino, if needed
     # ack = ser.readline()
     # print('Arduino sent back %s' % ack)
+
+def stop():
+    if not DEBUG:
+        send_command("0 00 00")
+        print("stopped")
 
 def remote_control(joy_data):
     global prev_input
@@ -96,7 +104,7 @@ def remote_control(joy_data):
     elif ((abs(x) + abs(y)) < 0.05):
         dir = b'0'  # STOP
     left_pwm, right_pwm = int(left_pwm), int(right_pwm)
-    command = str(dir.decode()) + " " + str(left_pwm).rjust(3, '0') + " " + str(right_pwm).rjust(3, '0') + " \n"  
+    command = str(dir.decode()) + " " + str(left_pwm).rjust(2, '0') + " " + str(right_pwm).rjust(2, '0')
     print(command)
     if not DEBUG and command != prev_input:
         send_command(command)
@@ -143,18 +151,17 @@ def learn(joy_data):
     left_pwm, right_pwm = int(left_pwm), int(right_pwm)
     data = [dir, left_pwm, right_pwm]
     learnt_arr.append(data)
-    command = str(dir.decode()) + " " + str(left_pwm).rjust(3, '0') + " " + str(right_pwm).rjust(3, '0') + " \n"
+    command = str(dir.decode()) + " " + str(left_pwm).rjust(2, "0") + " " + str(right_pwm).rjust(2, "0")
     print("learning:", command)
 
 def repeat():
     global prev_input
     global learnt_arr
 
-    command = "0 000 000"
+    command = "0 00 00"
     if len(learnt_arr) > 0:    
-        data = learnt_arr.pop(0)
-        command = str(data[0].decode()) + " " + str(data[1]).rjust(3, '0') + " " + str(data[2]).rjust(3, '0') + " \n"  
-
+        command = learnt_arr.pop(0)
+        
         print("repeating:", command)
     else:
         print("data exhausted.") 
@@ -203,7 +210,7 @@ def follow_me(frame):
         if area < MIN_AREA:
             print("Green target too small, ignoring.")
             if not DEBUG:
-                send_command("0 000 000")
+                send_command("0 00 00")
             return
 
         center_x = x + w // 2
@@ -219,7 +226,7 @@ def follow_me(frame):
         left_motor_speed = max(0, min(MAX_SPEED, forward_speed + error_x * speed_factor))
         right_motor_speed = max(0, min(MAX_SPEED, forward_speed - error_x * speed_factor))
         left_motor_speed, right_motor_speed = int(left_motor_speed), int(right_motor_speed)
-        command = f"2 {str(left_motor_speed).rjust(3, '0')} {str(right_motor_speed).rjust(3, '0')}\n"
+        command = f"2 {str(left_motor_speed).rjust(2, '0')} {str(right_motor_speed).rjust(2, '0')}"
         print(command)
         if palm_detected:
             print("palm detected, stopping")
@@ -228,4 +235,4 @@ def follow_me(frame):
             prev_input = command
     else:
         if not DEBUG:
-            send_command("0 000 000")
+            send_command("0 00 00")

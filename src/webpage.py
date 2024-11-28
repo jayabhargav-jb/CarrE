@@ -92,6 +92,7 @@ def follow_me_action():
 def stop_action():
     global current_mode
     current_mode = "idle"  # Stop all actions and go idle
+    stop()
     return jsonify({"message": "Stop mode activated"})
 
 @app.route('/video_feed')
