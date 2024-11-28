@@ -20,6 +20,12 @@
             <button onclick="triggerAction('stop')">Stop</button> <!-- Stop button -->
         </nav>
     </header>
+
+    <!-- Current Mode Display -->
+    <div class="current-mode-container">
+        <p id="current-mode">Current Mode: Idle</p>
+    </div>
+
     <main>
         <div class="webcam">
             <img src="{{ url_for('video_feed') }}" alt="Webcam feed">
@@ -34,14 +40,28 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             })
-                .then(response => response.json())
-                .then(data => {
-                    alert(data.message);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Check the console for details.');
-                });
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                updateCurrentMode(action); // Update the current mode display
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Check the console for details.');
+            });
+        }
+
+        function updateCurrentMode(action) {
+            const modeElement = document.getElementById('current-mode');
+            const modes = {
+                'remote_control': 'Remote Control',
+                'learn': 'Learn',
+                'repeat': 'Repeat',
+                'follow_me': 'Follow Me',
+                'stop': 'Idle'
+            };
+            const modeText = modes[action] || 'Idle';
+            modeElement.textContent = `Current Mode: ${modeText}`;
         }
 
         function updateJoystickData() {

@@ -39,13 +39,25 @@ nav button:hover {
     background-color: #0056b3;
 }
 
+.current-mode-container {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 18px;
+    /* color: #333; */
+}
+
+#current-mode {
+    font-weight: bold;
+    color: #007BFF;
+}
+
 /* Webcam container */
 main {
     display: flex;
     justify-content: center;
-    align-items: center;
+    /* align-items: center; */
     min-height: calc(100vh - 140px); /* Adjusted for title and nav bars */
-    padding: 20px;
+    /* padding: 20px; */
 }
 
 .webcam img {

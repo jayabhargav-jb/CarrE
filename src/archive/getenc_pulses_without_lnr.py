@@ -1,45 +1,34 @@
-import Jetson.GPIO as GPIO
+import RPi.GPIO as GPIO
 import time
 
-# GPIO pin setup for the encoders
-ENCODER1_A = 17  # Replace with the actual GPIO pin for Motor 1 Encoder A
+# GPIO pin configuration
+ENCODER_PIN = 16 # Replace with the GPIO pin connected to the encoder
 
-ENCODER2_A = 22  # Replace with the actual GPIO pin for Motor 2 Encoder A
+# Pulse counter
+pulse_count = 0
 
-
-# Initialize pulse counters
-encoder1_pulse_count = 0
-encoder2_pulse_count = 0
-
-# Callback functions for the interrupts
-def encoder1_callback(channel):
-    global encoder1_pulse_count
-    encoder1_pulse_count += 1
-
-def encoder2_callback(channel):
-    global encoder2_pulse_count
-    encoder2_pulse_count += 1
+# Callback function for interrupt
+def encoder_callback(channel):
+    global pulse_count
+    pulse_count += 1  # Increment pulse count on each rising edge
 
 # GPIO setup
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(ENCODER1_A, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setmode(GPIO.BCM)  # Use Broadcom SOC channel numbering
+GPIO.setup(ENCODER_PIN, GPIO.IN)  # Set pin as input with pull-up resistor
 
-GPIO.setup(ENCODER2_A, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-
-# Set up interrupts
-GPIO.add_event_detect(ENCODER1_A, GPIO.RISING, callback=encoder1_callback)
-GPIO.add_event_detect(ENCODER2_A, GPIO.RISING, callback=encoder2_callback)
-
+# Configure the pin as an interrupt
+GPIO.add_event_detect(ENCODER_PIN, GPIO.RISING, callback=encoder_callback)  # Trigger on rising edge
+# count = 0
 # Main loop
 try:
+    # print("Reading encoder pulses. Press Ctrl+C to exit.")
     while True:
-        print(f"Encoder 1 Pulse Count: {encoder1_pulse_count}")
-        print(f"Encoder 2 Pulse Count: {encoder2_pulse_count}")
-        time.sleep(0.5)
+        # Print the pulse count to the terminal
+        print(f"Pulse Count: {pulse_count}")
+        time.sleep(0.1)  # Update every second
+        # count += 1
 except KeyboardInterrupt:
-    print("Exiting program.")
+    print("\nExiting program.")
 
-# Clean up GPIO
 finally:
-    GPIO.cleanup()
+    GPIO.cleanup()  # Clean up GPIO settings
