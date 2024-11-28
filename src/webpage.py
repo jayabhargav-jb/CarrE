@@ -110,7 +110,7 @@ def joystick_input():
         y = -y  # Invert Y axis to match expected control
         with joy_data_lock:
             joy_data = [x, y]
-        print(f"Joystick Input - X: {x}, Y: {y}")
+        # print(f"Joystick Input - X: {x}, Y: {y}")
         if current_mode == "remote_control":
             remote_control(joy_data)
         elif current_mode == "learn":
