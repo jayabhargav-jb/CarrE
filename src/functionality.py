@@ -66,7 +66,7 @@ def stop():
 
 def remote_control(joy_data):
     global prev_input
-    print(f"Remote Control - Joystick data: X={joy_data[0]}, Y={joy_data[1]}")  # Debug print
+    # print(f"Remote Control - Joystick data: X={joy_data[0]}, Y={joy_data[1]}")  # Debug print
 
     if current_mode != "remote_control" and current_mode != "idle":
         return  # Exit if we're not in remote_control or idle mode
@@ -111,7 +111,7 @@ def remote_control(joy_data):
         prev_input = command
 
 def learn(joy_data):
-    global learnt_arr
+    global learnt_arr, prev_input
     if current_mode != "learn" and current_mode != "idle":
         return  # Exit if we're not in learn mode
     print(f"Learning - Joystick data: X={joy_data[0]}, Y={joy_data[1]}")  # Debug print
@@ -152,6 +152,9 @@ def learn(joy_data):
     # data = [dir, left_pwm, right_pwm]
     command = str(dir.decode()) + " " + str(left_pwm).rjust(2, "0") + " " + str(right_pwm).rjust(2, "0")
     learnt_arr.append(command)
+    if not DEBUG and command != prev_input:
+        send_command(command)
+        prev_input = command
     
     print("learning:", command)
 
@@ -174,12 +177,14 @@ def repeat():
 def follow_me(frame):
     # if current_mode != "follow_me":
     #     return  # Exit the function if we're not in follow_me mode
+    # print(cv2.cuda.getCudaEnabledDeviceCount())
 
     global palm_detected, prev_input
 
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # Green object detection
+
     mask = cv2.inRange(hsv_frame, lower_bound_green, upper_bound_green)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)

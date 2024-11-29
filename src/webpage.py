@@ -29,6 +29,7 @@ def generate_frames():
 
         # Process the frame based on current mode
         if current_mode == "follow_me":
+            print("current mode follow me")
             follow_me(frame)  # Use your follow_me function from functionality.py
 
         ret, buffer = cv2.imencode('.jpg', frame)

@@ -63,37 +63,45 @@
             const modeText = modes[action] || 'Idle';
             modeElement.textContent = `Current Mode: ${modeText}`;
         }
+        let isSending = false; // Flag to prevent sending too often
 
         function updateJoystickData() {
             const gamepads = navigator.getGamepads();
-            if (gamepads[0]) {
+            if (gamepads[0] && !isSending) {
                 const joystick = gamepads[0];
                 const x = joystick.axes[0].toFixed(2); // X-axis
                 const y = joystick.axes[1].toFixed(2); // Y-axis
-                const joystickData = { x: parseFloat(x), y: parseFloat(y) };
+                const newJoystickData = { x: parseFloat(x), y: parseFloat(y) };
 
-                // Send joystick data to the server
-                fetch('/joystick_input', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(joystickData),
-                })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json(); // Parse JSON if the response is valid
-                    } else {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                })
-                .then(data => {
-                    console.log('Server response:', data.message);
-                })
-                .catch(error => {
-                    console.error('Error:', error.message);
-                });
+                // Check if the joystick data has changed (optional)
+                if (JSON.stringify(newJoystickData) !== JSON.stringify(joystickData)) {
+                    joystickData = newJoystickData;
+
+                    // Send joystick data to the server
+                    fetch('/joystick_input', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(joystickData),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Server response:', data.message);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error.message);
+                    });
+                }
+
+                // Set flag to indicate data is being sent, then clear it after delay
+                isSending = true;
+                setTimeout(() => {
+                    isSending = false; // Reset flag after delay
+                }, 100); // Delay in milliseconds (100ms here)
             }
+
+            // Call again to keep checking for gamepad input
             requestAnimationFrame(updateJoystickData);
         }
 
