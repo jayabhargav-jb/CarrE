@@ -35,7 +35,7 @@ if not DEBUG:
     ser.setDTR(True)
     time.sleep(1)
 
-# Learn and repeat trial
+# Learn and repeat
 learnt_arr = []
 is_recording = False
 playback_mode = False
@@ -43,10 +43,10 @@ playback_index = 0
 
 # Follow Me
 palm_detected = False
-lower_bound = np.array([35, 50, 50])  # Green color lower HSV bound
-upper_bound = np.array([85, 255, 255])  # Green color upper HSV bound
-lower_skin = np.array([0, 20, 70], dtype=np.uint8) # Skin color lower bound
-upper_skin = np.array([20, 255, 255], dtype=np.uint8)
+lower_bound_green = np.array([35, 50, 50])  # Green color lower HSV bound
+upper_bound_green = np.array([85, 255, 255])  # Green color upper HSV bound
+lower_bound_skin = np.array([0, 20, 70]) # Skin color lower bound
+upper_bound_skin = np.array([20, 255, 255]) # Skin color upper bound
 
 def send_command(command):
     ack = b''
@@ -149,9 +149,10 @@ def learn(joy_data):
 
     # Learn Mode
     left_pwm, right_pwm = int(left_pwm), int(right_pwm)
-    data = [dir, left_pwm, right_pwm]
-    learnt_arr.append(data)
+    # data = [dir, left_pwm, right_pwm]
     command = str(dir.decode()) + " " + str(left_pwm).rjust(2, "0") + " " + str(right_pwm).rjust(2, "0")
+    learnt_arr.append(command)
+    
     print("learning:", command)
 
 def repeat():
@@ -179,7 +180,7 @@ def follow_me(frame):
     hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # Green object detection
-    mask = cv2.inRange(hsv_frame, lower_bound, upper_bound)
+    mask = cv2.inRange(hsv_frame, lower_bound_green, upper_bound_green)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
 
