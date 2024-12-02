@@ -14,31 +14,50 @@ app = Flask(__name__, template_folder="public", static_folder="public")
 # Capture from webcam
 camera = cv2.VideoCapture(0)
 
+cam_read = None
+
 # Global variables for joystick data and current mode
 joy_data = [0, 0]
 current_mode = "idle"  # Start in idle mode
 
 # Function to process frames for 'follow_me' mode
 def generate_frames():
-    global cam_read, current_mode
+    global current_mode, cam_read
     while True:
         success, frame = camera.read()
+        frame = cv2.resize(frame, (640, 480))
         if not success:
             break
-        cam_read = frame  # Expose the current frame
 
-        # Process the frame based on current mode
+        # Process the frame using CUDA
         if current_mode == "follow_me":
-            print("current mode follow me")
-            follow_me(frame)  # Use your follow_me function from functionality.py
+            # Convert frame to GPU memory
+            gpu_frame = cv2.cuda_GpuMat()
+            gpu_frame.upload(frame)
+            
+            # Example of CUDA operation: Convert to HSV (GPU-based operation)
+            # hsv_gpu_frame = cv2.cuda.cvtColor(gpu_frame, cv2.COLOR_BGR2HSV)
 
-        ret, buffer = cv2.imencode('.jpg', frame)
+            # Example of other CUDA operations like resizing (you can add more operations)
+            # resized_gpu_frame = cv2.cuda.resize(gpu_frame, (640, 480))
+
+            # Download processed frame back to CPU
+            # cam_read = resized_gpu_frame.download()
+            cam_read = gpu_frame.download()
+
+        else:
+            # If not in follow_me mode, use the original frame
+            cam_read = frame
+
+        # Encode the processed frame to send over HTTP
+        ret, buffer = cv2.imencode('.jpg', cam_read)
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 # Background thread to handle mode checking and execution
 def mode_check_loop():
+    global cam_read
     while True:
         with joy_data_lock:
             current_joy_data = joy_data.copy()  # Copy the data to avoid race condition
@@ -58,7 +77,6 @@ def mode_check_loop():
                 follow_me(cam_read)
 
         time.sleep(0.1)  # Small delay to prevent overloading the CPU
-
 
 # Flask Routes
 @app.route('/')
@@ -124,7 +142,7 @@ def joystick_input():
         #         follow_me(cam_read)
 
 
-        return jsonify({"status": "success", "message": f"Joystick data received: X={x}, Y={y}"})
+        return jsonify({"status": "success", "message": f"Joystick data received: X={x}, Y={y}"}), 200
     except Exception as e:
         print(f"Error processing joystick input: {e}")
         return jsonify({"status": "error", "message": str(e)}), 400

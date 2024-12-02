@@ -22,8 +22,8 @@ left_pwm = 0
 right_pwm = 0
 
 # DEBUG mode and previous input
-# DEBUG = True
-DEBUG = False
+DEBUG = True
+# DEBUG = False
 prev_input = ""
 
 if not DEBUG:
@@ -188,8 +188,6 @@ def follow_me(frame):
     mask = cv2.inRange(hsv_frame, lower_bound_green, upper_bound_green)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
-
-    
 
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if contours:
