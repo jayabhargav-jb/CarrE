@@ -22,8 +22,8 @@ left_pwm = 0
 right_pwm = 0
 
 # DEBUG mode and previous input
-DEBUG = True
-# DEBUG = False
+# DEBUG = True
+DEBUG = False
 prev_input = ""
 
 if not DEBUG:
