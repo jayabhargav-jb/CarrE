@@ -25,6 +25,8 @@ right_pwm = 0
 # DEBUG = True
 DEBUG = False
 prev_input = ""
+start_byte = 255
+end_byte = 254
 
 if not DEBUG:
     # Establish serial connection
@@ -49,12 +51,24 @@ lower_bound_skin = np.array([0, 20, 70]) # Skin color lower bound
 upper_bound_skin = np.array([20, 255, 255]) # Skin color upper bound
 
 def send_command(command):
+    a = bytearray()
     ack = b''
     # Checksum
-    checksum = sum(ord(char) for char in command)
-    checksum = checksum % 256
-    full_message = f"{command} {checksum} \n"  # Add a space and newline
-    ser.write(full_message.encode())
+    # checksum = sum(ord(char) for char in command)
+    # checksum = checksum % 256
+    # full_message = f"{command} {checksum} \n"  # Add a space and newline
+    # ser.write(full_message.encode())
+    for number in command.split(" "):
+            a += bytearray([int(number)])
+            
+    # print(a)
+    a += bytearray([sum(a)%256])
+    a += bytearray([end_byte])
+    a.insert(0, start_byte)
+    ser.write(a)
+    a = bytearray()
+    # print(ser.readline())
+    # time.sleep(0.001)
     # Optionally, read acknowledgment from the Arduino, if needed
     # ack = ser.readline()
     # print('Arduino sent back %s' % ack)
