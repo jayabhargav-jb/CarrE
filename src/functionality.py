@@ -4,7 +4,7 @@ import time
 import cv2
 from math import floor
 import numpy as np
-
+import csv
 # Define current_mode globally (import it from your webpage module if needed)
 current_mode = "idle"  # Start in idle mode
 
@@ -17,7 +17,7 @@ MIN_AREA = 15000
 
 # PWM settings
 MAX_PWM = 100
-DEADZONE = 0.3
+DEADZONE = 0.2
 left_pwm = 0
 right_pwm = 0
 
@@ -28,14 +28,28 @@ prev_input = ""
 start_byte = 255
 end_byte = 254
 
-if not DEBUG:
-    # Establish serial connection
-    ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
-    # Reset the Arduino's line to ensure communication starts correctly
-    ser.setDTR(False)
-    time.sleep(0.1)
-    ser.setDTR(True)
-    time.sleep(1)
+def ser_start():
+    global ser
+    if not DEBUG:
+        # Establish serial connection
+        ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
+        # Reset the Arduino's line to ensure communication starts correctly
+        ser.setDTR(False)
+        time.sleep(0.1)
+        ser.setDTR(True)
+        time.sleep(1)
+
+def ser_stop():
+    global ser
+    if not DEBUG:
+        ser.close()
+        # Establish serial connection
+        ser = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
+        # Reset the Arduino's line to ensure communication starts correctly
+        ser.setDTR(False)
+        time.sleep(0.1)
+        ser.setDTR(True)
+        time.sleep(1)
 
 # Learn and repeat
 learnt_arr = []
@@ -139,10 +153,10 @@ def learn(joy_data):
     if (abs(x) < DEADZONE) and (abs(y) < DEADZONE):
         x = 0
         y = 0
-    # elif (abs(x) < DEADZONE):
-    #     x = 0
-    # elif (abs(y) < DEADZONE):
-    #     y = 0
+    elif (abs(x) < DEADZONE):
+        x = 0
+    elif (abs(y) < DEADZONE):
+        y = 0
 
     # PWM implementation
     if x <= 0:
@@ -179,6 +193,8 @@ def learn(joy_data):
         print('Arduino sent back %s' % ack)
     time.sleep(0.05)
     print("learning:", command)
+
+    # with 
 
 def repeat():
     global prev_input

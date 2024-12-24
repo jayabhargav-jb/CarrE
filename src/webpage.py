@@ -16,6 +16,7 @@ app = Flask(__name__, template_folder="public", static_folder="public")
 camera = cv2.VideoCapture(0)
 
 cam_read = None
+ser_start_check = False
 
 # Global variables for joystick data and current mode
 joy_data = [0, 0]
@@ -58,7 +59,10 @@ def generate_frames():
 
 # Background thread to handle mode checking and execution
 def mode_check_loop():
-    global cam_read, current_mode
+    global cam_read, current_mode, ser_start_check
+    if not ser_start_check:
+        ser_start_check = True
+        ser_start()
     # print("inside mode check")
     while True:
         
@@ -115,7 +119,7 @@ def follow_me_action():
 def stop_action():
     global current_mode
     current_mode = "idle"  # Stop all actions and go idle
-    stop()
+    ser_stop()
     return jsonify({"message": "Stop mode activated"})
 
 @app.route('/video_feed')
