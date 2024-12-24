@@ -8,6 +8,7 @@ from threading import Lock
 # Global variables
 joy_data = [0, 0]
 joy_data_lock = Lock()
+# mode_check = 
 
 app = Flask(__name__, template_folder="public", static_folder="public")
 
@@ -57,8 +58,11 @@ def generate_frames():
 
 # Background thread to handle mode checking and execution
 def mode_check_loop():
-    global cam_read
+    global cam_read, current_mode
+    # print("inside mode check")
     while True:
+        
+        # print("inside mode check")
         with joy_data_lock:
             current_joy_data = joy_data.copy()  # Copy the data to avoid race condition
 
@@ -76,7 +80,7 @@ def mode_check_loop():
             if cam_read is not None:
                 follow_me(cam_read)
 
-        time.sleep(0.1)  # Small delay to prevent overloading the CPU
+        time.sleep(0.040)  # Small delay to prevent overloading the CPU
 
 # Flask Routes
 @app.route('/')
@@ -130,13 +134,13 @@ def joystick_input():
         y = -y  # Invert Y axis to match expected control
         with joy_data_lock:
             joy_data = [x, y]
-        # print(f"Joystick Input - X: {x}, Y: {y}")
-        if current_mode == "remote_control":
-            remote_control(joy_data)
-        elif current_mode == "learn":
-            learn(joy_data)
-        elif current_mode == "repeat":
-            repeat()
+        print(f"Joystick Input - X: {x}, Y: {y}")
+        # if current_mode == "remote_control":
+        #     remote_control(joy_data)
+        # elif current_mode == "learn":
+        #     learn(joy_data)
+        # elif current_mode == "repeat":
+        #     repeat()
         # elif current_mode == "follow_me":
         #     if cam_read is not None:
         #         follow_me(cam_read)

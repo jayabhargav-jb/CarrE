@@ -2,6 +2,7 @@ import sys
 import serial
 import time
 import cv2
+from math import floor
 import numpy as np
 
 # Define current_mode globally (import it from your webpage module if needed)
@@ -11,19 +12,18 @@ joy_data = (0, 0)
 # Frame and movement settings
 frame_center_x = 320
 frame_center_y = 240
-MAX_SPEED = 40
 STOP_THRESHOLD_AREA = 250000
 MIN_AREA = 15000
 
 # PWM settings
-MAX_PWM = 50
+MAX_PWM = 100
 DEADZONE = 0.3
 left_pwm = 0
 right_pwm = 0
 
 # DEBUG mode and previous input
-# DEBUG = True
 DEBUG = False
+# DEBUG = True
 prev_input = ""
 start_byte = 255
 end_byte = 254
@@ -52,7 +52,6 @@ upper_bound_skin = np.array([20, 255, 255]) # Skin color upper bound
 
 def send_command(command):
     a = bytearray()
-    ack = b''
     # Checksum
     # checksum = sum(ord(char) for char in command)
     # checksum = checksum % 256
@@ -70,8 +69,7 @@ def send_command(command):
     # print(ser.readline())
     # time.sleep(0.001)
     # Optionally, read acknowledgment from the Arduino, if needed
-    # ack = ser.readline()
-    # print('Arduino sent back %s' % ack)
+    
 
 def stop():
     if not DEBUG:
@@ -122,6 +120,9 @@ def remote_control(joy_data):
     print(command)
     if not DEBUG and command != prev_input:
         send_command(command)
+        ack = b''
+        ack = ser.readline()
+        print('Arduino sent back %s' % ack)
         prev_input = command
 
 def learn(joy_data):
@@ -138,10 +139,10 @@ def learn(joy_data):
     if (abs(x) < DEADZONE) and (abs(y) < DEADZONE):
         x = 0
         y = 0
-    elif (abs(x) < DEADZONE):
-        x = 0
-    elif (abs(y) < DEADZONE):
-        y = 0
+    # elif (abs(x) < DEADZONE):
+    #     x = 0
+    # elif (abs(y) < DEADZONE):
+    #     y = 0
 
     # PWM implementation
     if x <= 0:
@@ -165,11 +166,18 @@ def learn(joy_data):
     left_pwm, right_pwm = int(left_pwm), int(right_pwm)
     # data = [dir, left_pwm, right_pwm]
     command = str(dir.decode()) + " " + str(left_pwm).rjust(2, "0") + " " + str(right_pwm).rjust(2, "0")
-    learnt_arr.append(command)
-    if not DEBUG and command != prev_input:
+    # learnt_arr.append(command)
+    if not DEBUG:
         send_command(command)
         prev_input = command
-    
+        # ack = b''
+        ack = ser.readline().decode('utf-8').split()
+        for i in range(len(ack)):
+            ack[i] = int(floor(eval(ack[i])))
+        if len(ack) == 3:
+            learnt_arr.append(ack)
+        print('Arduino sent back %s' % ack)
+    time.sleep(0.05)
     print("learning:", command)
 
 def repeat():
@@ -177,16 +185,28 @@ def repeat():
     global learnt_arr
 
     command = "0 00 00"
+    print("learnt array length", len(learnt_arr))
     if len(learnt_arr) > 0:    
-        command = learnt_arr.pop(0)
+        # arr = learnt_arr.pop(-1)
+        arr = learnt_arr.pop(0)
+        # if arr[0] == 1:
+        #     arr[0] = 2
+        # elif arr[0] == 2:
+        #     arr[0] = 1
+        print(f"len of arr is {len(arr)}")
+        command = f"{arr[0]} {arr[1]} {arr[2]}"
+        if not DEBUG:
+            send_command(command)
+            # ack = b''
+            ack = ser.readline().decode('utf-8').split()
+            # learnt_arr.append(ack)
+            print('Arduino sent back %s' % ack)
+        time.sleep(0.05)
         
         print("repeating:", command)
     else:
         print("data exhausted.") 
-    
-    if not DEBUG and command != prev_input:
-        send_command(command)
-        prev_input = command
+
 
 def follow_me(frame):
     # if current_mode != "follow_me":
@@ -204,21 +224,21 @@ def follow_me(frame):
     mask = cv2.dilate(mask, None, iterations=2)
 
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if contours:
-        for contour in contours:
-            area = cv2.contourArea(contour)
-            if 5000 < area < 25000:  # Palm size range (adjust as needed)
-                # Check for palm shape: convex hull with few defects
-                hull = cv2.convexHull(contour, returnPoints=False)
-                if len(hull) > 3:
-                    defects = cv2.convexityDefects(contour, hull)
-                    if defects is not None and len(defects) > 3:
-                        palm_detected = True
-                        print("palm detected")
-                        # cv2.drawContours(frame, [contour], -1, (255, 0, 0), 2)  # Draw detected palm
-                        break
-            else:
-                palm_detected = False
+    # if contours:
+    #     for contour in contours:
+    #         area = cv2.contourArea(contour)
+    #         if 5000 < area < 25000:  # Palm size range (adjust as needed)
+    #             # Check for palm shape: convex hull with few defects
+    #             hull = cv2.convexHull(contour, returnPoints=False)
+    #             if len(hull) > 3:
+    #                 defects = cv2.convexityDefects(contour, hull)
+    #                 if defects is not None and len(defects) > 3:
+    #                     palm_detected = True
+    #                     print("palm detected")
+    #                     # cv2.drawContours(frame, [contour], -1, (255, 0, 0), 2)  # Draw detected palm
+    #                     break
+    #         else:
+    #             palm_detected = False
 
     if contours:
         largest_contour = max(contours, key=cv2.contourArea)
@@ -234,15 +254,15 @@ def follow_me(frame):
         center_x = x + w // 2
         error_x = center_x - frame_center_x
 
-        forward_speed = int(MAX_SPEED * (1 - area / STOP_THRESHOLD_AREA)) if area <= STOP_THRESHOLD_AREA else 0
+        forward_speed = int(MAX_PWM * (1 - area / STOP_THRESHOLD_AREA)) if area <= STOP_THRESHOLD_AREA else 0
 
         speed_factor = 8
         error_x /= 100
         if abs(error_x) < 0.2:
             error_x = 0
 
-        left_motor_speed = max(0, min(MAX_SPEED, forward_speed + error_x * speed_factor))
-        right_motor_speed = max(0, min(MAX_SPEED, forward_speed - error_x * speed_factor))
+        left_motor_speed = max(0, min(MAX_PWM, forward_speed + error_x * speed_factor))
+        right_motor_speed = max(0, min(MAX_PWM, forward_speed - error_x * speed_factor))
         left_motor_speed, right_motor_speed = int(left_motor_speed), int(right_motor_speed)
         command = f"2 {str(left_motor_speed).rjust(2, '0')} {str(right_motor_speed).rjust(2, '0')}"
         print(command)
@@ -254,3 +274,6 @@ def follow_me(frame):
     else:
         if not DEBUG:
             send_command("0 00 00")
+            ack = ser.readline().decode('utf-8').split()
+            # learnt_arr.append(ack)
+            print('Arduino sent back %s' % ack)
