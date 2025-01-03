@@ -63,9 +63,9 @@ def mode_check_loop():
     if not ser_start_check:
         ser_start_check = True
         ser_start()
-    # print("inside mode check")
+    print("inside mode check")
+    
     while True:
-        
         # print("inside mode check")
         with joy_data_lock:
             current_joy_data = joy_data.copy()  # Copy the data to avoid race condition
@@ -160,6 +160,7 @@ if __name__ == '__main__':
     # Start the background thread for mode checking
     thread = threading.Thread(target=mode_check_loop)
     thread.daemon = True  # Ensure the thread exits when the main program exits
+    # thread = threading.Timer(0.05, mode_check_loop)
     thread.start()
 
     # Start the Flask app
