@@ -4,7 +4,15 @@ import time
 import cv2
 from math import floor
 import numpy as np
+
 import csv
+import datetime
+# datetime.datetime.now()
+
+# Result tabulation
+f_obj = open("learn_repeat.csv", "w")
+writer_obj = csv.writer(f_obj)
+
 # Define current_mode globally (import it from your webpage module if needed)
 current_mode = "idle"  # Start in idle mode
 
@@ -41,6 +49,7 @@ def ser_start():
 
 def ser_stop():
     global ser
+    f_obj.close()
     if not DEBUG:
         ser.close()
         # Establish serial connection
@@ -86,6 +95,8 @@ def send_command(command):
     
 
 def stop():
+    global learnt_arr
+    learnt_arr = []
     if not DEBUG:
         send_command("0 00 00")
         print("stopped")
@@ -190,6 +201,7 @@ def learn(joy_data):
             ack[i] = int(floor(eval(ack[i])))
         if len(ack) == 3:
             learnt_arr.append(ack)
+            writer_obj.writerow(["learn", ack[0], ack[1], ack[2]])
         print('Arduino sent back %s' % ack)
     time.sleep(0.05)
     print("learning:", command)
@@ -215,7 +227,10 @@ def repeat():
             send_command(command)
             # ack = b''
             ack = ser.readline().decode('utf-8').split()
-            # learnt_arr.append(ack)
+            for i in range(len(ack)):
+                ack[i] = int(floor(eval(ack[i])))
+            if len(ack) == 3:
+                writer_obj.writerow(["repeat", ack[0], ack[1], ack[2]])
             print('Arduino sent back %s' % ack)
         time.sleep(0.05)
         

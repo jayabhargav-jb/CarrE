@@ -5,6 +5,8 @@ import time
 from functionality import *  # Ensure functionality.py contains the necessary mode functions
 from threading import Lock
 
+
+
 # Global variables
 joy_data = [0, 0]
 joy_data_lock = Lock()
